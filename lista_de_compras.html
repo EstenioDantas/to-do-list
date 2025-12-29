@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager Pro</title>
+    <style>
+        /* CSS Básico para ficar bonito */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #202124;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #303134;
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            color: #8ab4f8;
+        }
+
+        .form-control {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #5f6368;
+            background-color: #202124;
+            color: white;
+            outline: none;
+        }
+
+        button#btnAdicionar {
+            padding: 10px 20px;
+            background-color: #8ab4f8;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #202124;
+        }
+
+        button#btnAdicionar:hover {
+            background-color: #aecbfa;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #424548;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-delete {
+            background-color: transparent;
+            border: none;
+            color: #e8eaed;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .btn-delete:hover {
+            color: #f28b82;
+        }
+
+        .feito {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>🚀 Minhas Tarefas</h1>
+
+        <form class="form-control" id="formTarefa">
+            <input type="text" id="inputTarefa" placeholder="O que precisa ser feito?" required>
+            <button type="submit" id="btnAdicionar">Adicionar</button>
+        </form>
+
+        <ul id="listaTarefas">
+        </ul>
+    </div>
+
+    <script>
+        const form = document.getElementById('formTarefa')
+        const input = document.getElementById('inputTarefa')
+        const lista = document.getElementById('listaTarefas')
+
+        const tarefasSalvas = localStorage.getItem('tarefasEmTexto')
+        let itens = JSON.parse(tarefasSalvas) || []
+
+        mostrarTarefa()
+
+        form.addEventListener('submit', function (evento) {
+            evento.preventDefault()
+            salvarTarefa()
+        })
+
+        function salvarTarefa() {
+
+            const valor = input.value
+
+            if (valor === '') {
+                return
+            }
+
+            const listaDeTarefas = {
+                id: Date.now(),
+                texto: valor,
+                concluido: false
+            }
+            itens.push(listaDeTarefas)
+            const tarefasEmTexto = JSON.stringify(itens)
+            localStorage.setItem('tarefasEmTexto', tarefasEmTexto)
+            form.reset()
+            mostrarTarefa()
+
+        }
+
+        function mostrarTarefa() {
+
+            lista.innerHTML = ''
+
+            itens.forEach(item => {
+
+                const classe = item.concluido ? 'feito' : ''
+
+                lista.innerHTML += `
+                <li class="item-tarefa ${classe}" id = "${item.id}">
+                    <span>${item.texto}</span>
+                    <button class="btn-delete">🗑️</button>
+                </li >`
+            });
+        }
+
+        lista.addEventListener('click', function (evento) {
+            const elementoClicado = evento.target
+
+            if (elementoClicado.classList.contains('btn-delete')) {
+
+                const itemPai = elementoClicado.parentElement
+                const idParaDeletar = Number(itemPai.id)
+
+                itens = itens.filter(tarefa => tarefa.id !== idParaDeletar)
+
+                localStorage.setItem('tarefasEmTexto', JSON.stringify(itens))
+
+                mostrarTarefa()
+            }
+            else if (elementoClicado.tagName === 'SPAN' || elementoClicado.tagName === 'LI') {
+
+                // 1. Acha o ID do pai (igual fizemos antes)
+                // O comando .closest('li') garante que pegamos a LI certa mesmo clicando no span
+                const itemPai = elementoClicado.closest('li')
+                const idParaMudar = Number(itemPai.id)
+
+                // 2. Acha o item certo no array (Usando .find)
+                const tarefaEncontrada = itens.find(tarefa => tarefa.id === idParaMudar)
+
+                // 3. Inverte o valor (se era true vira false, se era false vira true)
+                if (tarefaEncontrada) {
+                    tarefaEncontrada.concluido = !tarefaEncontrada.concluido
+                }
+
+                // 4. Salva e Atualiza
+                localStorage.setItem('tarefasEmTexto', JSON.stringify(itens))
+                mostrarTarefa()
+            }
+        })
+
+    </script>
+</body>
+
+</html>
